@@ -1,0 +1,13 @@
+name: simple-tex-service
+version: '0.1.0.0'
+author: yamadapc
+maintainer: tacla.yamada@gmail.com
+license: UnspecifiedLicense
+
+dependencies:
+- base >=4.9 && <4.10
+
+executables:
+  simple-tex-service:
+    main: Main.hs
+    source-dirs: src
