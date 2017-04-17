@@ -1,0 +1,11 @@
+stages:
+  - build
+
+build-deb:
+  stage: build
+  image: beijaflorio/docker-awscli-git
+  allow_failure: true
+  services:
+  - docker:dind
+  script:
+  - ./stack-fpm
