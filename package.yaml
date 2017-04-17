@@ -6,8 +6,19 @@ license: UnspecifiedLicense
 
 dependencies:
 - base >=4.9 && <4.10
+- process
+- Spock
+- temporary
+- directory
+- uuid
+- random
+- pureMD5
+- bytestring
+- amazonka-s3
+- shakespeare
 
 executables:
   simple-tex-service:
     main: Main.hs
     source-dirs: src
+    ghc-options: -threaded -rtsopts
