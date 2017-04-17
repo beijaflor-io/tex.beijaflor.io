@@ -4,18 +4,29 @@
 module Main where
 
 import           Control.Concurrent
+import           Control.Lens
 import           Control.Monad
-import qualified Data.ByteString.Lazy as ByteStringL
-import qualified Data.Digest.Pure.MD5 as MD5
-import qualified Data.UUID            as UUID
+import           Control.Monad.IO.Class
+import qualified Data.ByteString.Lazy          as ByteStringL
+import qualified Data.Digest.Pure.MD5          as MD5
+import qualified Data.HashMap.Lazy             as HashMap
+import           Data.Monoid
+import           Data.String
+import           Data.Text                     (Text)
+import qualified Data.Text                     as Text
+import qualified Data.UUID                     as UUID
+import           Network.AWS
+import           Network.AWS.S3
 import           System.Directory
 import           System.Exit
 import           System.IO
 import           System.IO.Temp
 import           System.Process
 import           System.Random
+import           Text.Blaze.Html.Renderer.Utf8
 import           Text.Hamlet
 import           Web.Spock
+import           Web.Spock.Config
 
 tex :: [String] -> CreateProcess
 tex args = (proc "context" args) { std_out = NoStream
@@ -39,24 +50,15 @@ getHome host = preferredFormat >>= \case
       <h4> Paste your cabal file bellow
       <.row>
         <.col-md-6>
-          <form action="/form" method="POST">
+          <form action="/" method="POST">
             <.form-group>
-              <textarea .form-control name="cabalfile" id="cabalfile" rows="30" style="resize: none; min-height: 50vh;" />
+              <input name="file" .form-control name="cabalfile" type="file">
             <.form-group>
               <button class="btn btn-primary" type="submit">
                 Convert
         <.col-md-6>
           <pre><code class="result"># Result</code></pre>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js" />
-    <script>
-      \$('form').submit(function(e) {
-        e.preventDefault();
-        \$.post('/form', {cabalfile: $('textarea').val()}, function(res) {
-          \$('.result').text(res);
-        }).fail(function(err) {
-          \$('.result').text(JSON.stringify(err, null, 2));
-        });
-      });
         |]
     _ -> text $ Text.unlines [ "Available methods:"
                              , "POST /"
@@ -84,26 +86,43 @@ runTex target = do
            , logPath
            )
 
+run :: FilePath -> IO (FilePath, FilePath)
 run targetFile = do
     uuid <- UUID.toString <$> randomIO
     putStrLn $ "Got request " ++ uuid
-    f <- MD5.md5 <$> ByteStringL.readFile targetFile
+    f <- show . MD5.md5 <$> ByteStringL.readFile targetFile
     putStrLn $ "Hash " ++ (show f)
     (pdfFile, logFile) <- runTex targetFile
     putStrLn $ "Generated files for " ++ uuid
     putStrLn $ "Terminating response for " ++ uuid
-    return ( "PDF: " ++ pdfFile
-           , "LOG: " ++ logFile
-           )
+
+    lgr <- newLogger Debug stdout
+    let pdfS3Key = f ++ ".pdf"
+        logS3Key = f ++ ".log"
+        texS3Key = f ++ ".tex"
+
+    pdfBody <- ByteStringL.readFile pdfFile
+    texBody <- ByteStringL.readFile targetFile
+    logBody <- ByteStringL.readFile logFile
+    env <- newEnv Discover
+    runResourceT $ runAWS (env & envLogger .~ lgr) $ do
+        send (putObject "simple-tex-service" (fromString pdfS3Key) (toBody pdfBody))
+        send (putObject "simple-tex-service" (fromString logS3Key) (toBody logBody))
+        send (putObject "simple-tex-service" (fromString texS3Key) (toBody texBody))
+
+    return (pdfFile, logFile)
 
 main :: IO ()
 main = do
-    runSpock 3003 $ spockT id $ do
+    spockCfg <- defaultSpockCfg () PCNoDatabase ()
+    runSpock 3003 $ spock spockCfg $ do
+        get "/" (getHome "localhost:3003")
         post "/" $ do
-            targetFile <- param "file"
-            print targetFile
-            run targetFile
-            text "ok"
+            fs <- files
+            let Just targetFile = uf_tempLocation <$> (HashMap.lookup "file" fs)
+            liftIO $ print targetFile
+            (pdfFile, logFile) <- liftIO $ run targetFile
+            file "x-pdf" pdfFile
 
 {-
 (Nothing, Just inp, Just err, ph) <- createProcess (tex ["./examples/test.tex"])

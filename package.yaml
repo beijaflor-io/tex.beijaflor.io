@@ -5,17 +5,22 @@ maintainer: tacla.yamada@gmail.com
 license: UnspecifiedLicense
 
 dependencies:
-- base >=4.9 && <4.10
-- process
 - Spock
-- temporary
-- directory
-- uuid
-- random
-- pureMD5
-- bytestring
+- amazonka
 - amazonka-s3
+- base >=4.9 && <4.10
+- blaze-html
+- bytestring
+- directory
+- lens
+- process
+- pureMD5
+- random
 - shakespeare
+- temporary
+- text
+- unordered-containers
+- uuid
 
 executables:
   simple-tex-service:

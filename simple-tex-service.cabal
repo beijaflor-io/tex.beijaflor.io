@@ -13,17 +13,22 @@ cabal-version:       >= 1.10
 executable simple-tex-service
   main-is: Main.hs
   build-depends:
-      base >=4.9 && <4.10
-    , process
-    , Spock
-    , temporary
-    , directory
-    , uuid
-    , random
-    , pureMD5
-    , bytestring
+      Spock
+    , amazonka
     , amazonka-s3
+    , base >=4.9 && <4.10
+    , blaze-html
+    , bytestring
+    , directory
+    , lens
+    , process
+    , pureMD5
+    , random
     , shakespeare
+    , temporary
+    , text
+    , unordered-containers
+    , uuid
   hs-source-dirs:
       src
   ghc-options: -threaded -rtsopts
