@@ -1,0 +1,7 @@
+phases:
+  build:
+    commands:
+    - wget https://github.com/commercialhaskell/stack/releases/download/v1.4.0/stack-1.4.0-linux-x86_64-static.tar.gz
+    - tar xfzv ./stack-1.4.0*
+    - mv ./stack-1.4.0*/stack /usr/local/bin/
+    - ./stack-fpm
