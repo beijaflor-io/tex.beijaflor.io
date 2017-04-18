@@ -1,7 +1,7 @@
-FROM ubuntu:16.10
+FROM ubuntu:xenial
 MAINTAINER Pedro Tacla Yamada <tacla.yamada@gmail.com>
 
-RUN apt-get -qq update && apt-get install -y -q \
+RUN apt-get update && apt-get install -y -q \
     texlive-full \
     latex-beamer \
     context \
@@ -11,5 +11,8 @@ RUN apt-get -qq update && apt-get install -y -q \
 
 WORKDIR /data
 VOLUME ["/data"]
+
+ADD ./dist/simple-tex-service_0.1.0.0_amd64.deb /app/
+RUN dpkg -i /app/simple-tex-service_0.1.0.0_amd64.deb
 
 CMD ["/bin/bash"]
