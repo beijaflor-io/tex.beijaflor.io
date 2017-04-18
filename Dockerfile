@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /data
 VOLUME ["/data"]
 
-ADD ./simple-tex-service_0.1.0.0_amd64.deb /app/
+ADD ./dist/simple-tex-service_0.1.0.0_amd64.deb /app/
 RUN apt-get update && apt-get install -y /app/simple-tex-service_0.1.0.0_amd64.deb
 
 CMD ["simple-tex-service"]

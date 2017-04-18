@@ -10,6 +10,7 @@ import           Control.Monad.IO.Class
 import qualified Data.ByteString.Lazy          as ByteStringL
 import qualified Data.Digest.Pure.MD5          as MD5
 import qualified Data.HashMap.Lazy             as HashMap
+import           Data.Maybe
 import           Data.Monoid
 import           Data.String
 import           Data.Text                     (Text)
@@ -18,6 +19,7 @@ import qualified Data.UUID                     as UUID
 import           Network.AWS
 import           Network.AWS.S3
 import           System.Directory
+import           System.Environment
 import           System.Exit
 import           System.IO
 import           System.IO.Temp
@@ -114,8 +116,9 @@ run targetFile = do
 
 main :: IO ()
 main = do
+    port <- read . fromMaybe "3003" <$> lookupEnv "PORT"
     spockCfg <- defaultSpockCfg () PCNoDatabase ()
-    runSpock 3003 $ spock spockCfg $ do
+    runSpock port $ spock spockCfg $ do
         get "/" (getHome "localhost:3003")
         post "/" $ do
             fs <- files
