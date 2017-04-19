@@ -88,7 +88,6 @@ runTex target = do
            , logPath
            )
 
-run :: FilePath -> IO (FilePath, FilePath)
 run targetFile = do
     uuid <- UUID.toString <$> randomIO
     putStrLn $ "Got request " ++ uuid
@@ -112,7 +111,7 @@ run targetFile = do
         send (putObject "simple-tex-service" (fromString logS3Key) (toBody logBody))
         send (putObject "simple-tex-service" (fromString texS3Key) (toBody texBody))
 
-    return (pdfFile, logFile)
+    return (pdfFile, logFile, pdfS3Key, logS3Key, texS3Key)
 
 main :: IO ()
 main = do
@@ -124,7 +123,11 @@ main = do
             fs <- files
             let Just targetFile = uf_tempLocation <$> (HashMap.lookup "file" fs)
             liftIO $ print targetFile
-            (pdfFile, logFile) <- liftIO $ run targetFile
+            (pdfFile, logFile, pdfS3Key, logS3Key, texS3Key) <- liftIO $ run targetFile
+            let setHeader' h = setHeader h . fromString
+            setHeader' "x-stexs-pdf-s3-key" pdfS3Key
+            setHeader' "x-stexs-log-s3-key" logS3Key
+            setHeader' "x-stexs-tex-s3-key" texS3Key
             file "x-pdf" pdfFile
 
 {-
