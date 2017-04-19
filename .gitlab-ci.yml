@@ -3,7 +3,7 @@ stages:
 
 build-deb:
   stage: build
-  image: beijaflorio/docker-awscli-git
+  image: docker
   variables:
     DOCKER_DRIVER: overlay
   services:
