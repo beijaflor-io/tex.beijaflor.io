@@ -1,6 +1,6 @@
 machine:
   services:
-    - docker
+  - docker
 
 build:
   override:
