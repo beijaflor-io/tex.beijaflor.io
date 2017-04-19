@@ -16,4 +16,5 @@ build-deb:
   - tar xfzv ./stack.tar.gz
   - mv ./stack-1.4.0*/stack /usr/local/bin/
   - ls
+  - stack setup
   - sh -e ./stack-fpm
