@@ -1,0 +1,10 @@
+machine:
+  services:
+    - docker
+
+build:
+  override:
+  - curl -L https://github.com/commercialhaskell/stack/releases/download/v1.4.0/stack-1.4.0-linux-x86_64-static.tar.gz > stack.tar.gz
+  - tar xfzv ./stack.tar.gz
+  - mv ./stack-1.4.0*/stack /usr/local/bin/
+  - ./stack-fpm
