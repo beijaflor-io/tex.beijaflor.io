@@ -8,6 +8,9 @@ deploy: FORCE
 	make push-image
 	image=$(image) ecs-cli compose service up
 
+up:
+	image=$(image) docker-compose up
+
 build-deb:
 	./stack-fpm
 
