@@ -6,6 +6,7 @@ deploy: FORCE
 	make build-deb
 	make build-image
 	make push-image
+	image=$(image) ecs-cli compose service up
 
 build-deb:
 	./stack-fpm
