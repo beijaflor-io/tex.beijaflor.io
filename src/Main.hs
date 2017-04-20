@@ -16,8 +16,8 @@ import           Data.String
 import           Data.Text                     (Text)
 import qualified Data.Text                     as Text
 import qualified Data.UUID                     as UUID
-import           Network.AWS
-import           Network.AWS.S3
+import qualified Network.AWS                   as AWS
+import qualified Network.AWS.S3                as AWS
 import           System.Directory
 import           System.Environment
 import           System.Exit
@@ -89,29 +89,38 @@ runTex target = do
            )
 
 run targetFile = do
+    lgr <- AWS.newLogger AWS.Debug stdout
+    env <- AWS.newEnv AWS.Discover
     uuid <- UUID.toString <$> randomIO
     putStrLn $ "Got request " ++ uuid
+
     f <- show . MD5.md5 <$> ByteStringL.readFile targetFile
     putStrLn $ "Hash " ++ (show f)
-    (pdfFile, logFile) <- runTex targetFile
-    putStrLn $ "Generated files for " ++ uuid
-    putStrLn $ "Terminating response for " ++ uuid
 
-    lgr <- newLogger Debug stdout
     let pdfS3Key = f ++ ".pdf"
         logS3Key = f ++ ".log"
         texS3Key = f ++ ".tex"
 
-    pdfBody <- ByteStringL.readFile pdfFile
-    texBody <- ByteStringL.readFile targetFile
-    logBody <- ByteStringL.readFile logFile
-    env <- newEnv Discover
-    runResourceT $ runAWS (env & envLogger .~ lgr) $ do
-        send (putObject "simple-tex-service" (fromString pdfS3Key) (toBody pdfBody))
-        send (putObject "simple-tex-service" (fromString logS3Key) (toBody logBody))
-        send (putObject "simple-tex-service" (fromString texS3Key) (toBody texBody))
+    exists <- AWS.runResourceT $ AWS.runAWS (env & AWS.envLogger .~ lgr) $ do
+        AWS.send (AWS.headObject "simple-tex-service" (fromString pdfS3Key))
 
-    return (pdfFile, logFile, pdfS3Key, logS3Key, texS3Key)
+    if (exists ^. AWS.horsResponseStatus == 200)
+        then return (pdfS3Key, logS3Key, texS3Key)
+        else do
+            (pdfFile, logFile) <- runTex targetFile
+            putStrLn $ "Generated files for " ++ uuid
+            putStrLn $ "Terminating response for " ++ uuid
+
+            pdfBody <- ByteStringL.readFile pdfFile
+            texBody <- ByteStringL.readFile targetFile
+            logBody <- ByteStringL.readFile logFile
+
+            AWS.runResourceT $ AWS.runAWS (env & AWS.envLogger .~ lgr) $ do
+                AWS.send (AWS.putObject "simple-tex-service" (fromString pdfS3Key) (AWS.toBody pdfBody))
+                AWS.send (AWS.putObject "simple-tex-service" (fromString logS3Key) (AWS.toBody logBody))
+                AWS.send (AWS.putObject "simple-tex-service" (fromString texS3Key) (AWS.toBody texBody))
+
+            return (pdfS3Key, logS3Key, texS3Key)
 
 main :: IO ()
 main = do
@@ -123,12 +132,14 @@ main = do
             fs <- files
             let Just targetFile = uf_tempLocation <$> (HashMap.lookup "file" fs)
             liftIO $ print targetFile
-            (pdfFile, logFile, pdfS3Key, logS3Key, texS3Key) <- liftIO $ run targetFile
+            (pdfS3Key, logS3Key, texS3Key) <- liftIO $ run targetFile
             let setHeader' h = setHeader h . fromString
-            setHeader' "x-stexs-pdf-s3-key" pdfS3Key
-            setHeader' "x-stexs-log-s3-key" logS3Key
-            setHeader' "x-stexs-tex-s3-key" texS3Key
-            file "x-pdf" pdfFile
+            setHeader' "x-simple-tex-service-pdf" (s3Url pdfS3Key)
+            setHeader' "x-simple-tex-service-log" (s3Url logS3Key)
+            setHeader' "x-simple-tex-service-tex" (s3Url texS3Key)
+            redirect $ fromString (s3Url pdfS3Key)
+  where
+    s3Url u = "https://simple-tex-service.s3.amazonaws.com/" <> u
 
 {-
 (Nothing, Just inp, Just err, ph) <- createProcess (tex ["./examples/test.tex"])
