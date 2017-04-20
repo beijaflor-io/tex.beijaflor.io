@@ -29,6 +29,7 @@ executable simple-tex-service
     , text
     , unordered-containers
     , uuid
+    , exceptions
   hs-source-dirs:
       src
   ghc-options: -threaded -rtsopts

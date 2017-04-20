@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE QuasiQuotes       #-}
@@ -6,6 +7,7 @@ module Main where
 import           Control.Concurrent
 import           Control.Lens
 import           Control.Monad
+import           Control.Monad.Catch
 import           Control.Monad.IO.Class
 import qualified Data.ByteString.Lazy          as ByteStringL
 import qualified Data.Digest.Pure.MD5          as MD5
@@ -52,7 +54,7 @@ getHome host = preferredFormat >>= \case
       <h4> Paste your cabal file bellow
       <.row>
         <.col-md-6>
-          <form action="/" method="POST">
+          <form action="/" method="POST" enctype="multipart/form-data">
             <.form-group>
               <input name="file" .form-control name="cabalfile" type="file">
             <.form-group>
@@ -101,26 +103,33 @@ run targetFile = do
         logS3Key = f ++ ".log"
         texS3Key = f ++ ".tex"
 
-    exists <- AWS.runResourceT $ AWS.runAWS (env & AWS.envLogger .~ lgr) $ do
-        AWS.send (AWS.headObject "simple-tex-service" (fromString pdfS3Key))
+    exists <- AWS.runResourceT $ AWS.runAWS (env & AWS.envLogger .~ lgr) $ (do
+        res <- AWS.send (AWS.headObject "simple-tex-service" (fromString pdfS3Key))
+        return (res ^. AWS.horsResponseStatus == 200)
+      ) `catch` (\(AWS.ServiceError _) -> return False)
 
-    if (exists ^. AWS.horsResponseStatus == 200)
+    if exists
         then return (pdfS3Key, logS3Key, texS3Key)
         else do
             (pdfFile, logFile) <- runTex targetFile
             putStrLn $ "Generated files for " ++ uuid
             putStrLn $ "Terminating response for " ++ uuid
-
             pdfBody <- ByteStringL.readFile pdfFile
             texBody <- ByteStringL.readFile targetFile
             logBody <- ByteStringL.readFile logFile
-
-            AWS.runResourceT $ AWS.runAWS (env & AWS.envLogger .~ lgr) $ do
-                AWS.send (AWS.putObject "simple-tex-service" (fromString pdfS3Key) (AWS.toBody pdfBody))
-                AWS.send (AWS.putObject "simple-tex-service" (fromString logS3Key) (AWS.toBody logBody))
-                AWS.send (AWS.putObject "simple-tex-service" (fromString texS3Key) (AWS.toBody texBody))
-
+            uploadAllToS3 env lgr [ (pdfS3Key, pdfBody, "application/pdf")
+                                  , (texS3Key, texBody, "text/plain")
+                                  , (logS3Key, logBody, "text/plain")
+                                  ]
             return (pdfS3Key, logS3Key, texS3Key)
+  where
+    uploadAllToS3 env lgr pairs =
+        AWS.runResourceT $ AWS.runAWS (env & AWS.envLogger .~ lgr) $
+            forM_ pairs $ \(k, b, ct) -> uploadToS3 k b ct
+    uploadToS3 key file contentType = do
+        let req = AWS.putObject "simple-tex-service" (fromString key) (AWS.toBody file)
+            req' = req & AWS.poContentType .~ (Just contentType)
+        AWS.send req'
 
 main :: IO ()
 main = do
