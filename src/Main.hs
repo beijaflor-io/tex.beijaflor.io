@@ -48,10 +48,10 @@ getHome host = preferredFormat >>= \case
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   <body>
     <div class="container">
-      <h1> Hpack Convert
+      <h1> TeX Service
       <h4> Convert with <code>curl</code>
       <pre><code>#{curlExample host}</code></pre>
-      <h4> Paste your cabal file bellow
+      <h4> Upload a ConTeXt file
       <.row>
         <.col-md-6>
           <form action="/" method="POST" enctype="multipart/form-data">
@@ -61,7 +61,9 @@ getHome host = preferredFormat >>= \case
               <button class="btn btn-primary" type="submit">
                 Convert
         <.col-md-6>
-          <pre><code class="result"># Result</code></pre>
+           <p>
+             The file will be uploaded the AWS S3 and you'll be redirected to
+             the generated PDF permanent location.
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.0/jquery.min.js" />
         |]
     _ -> text $ Text.unlines [ "Available methods:"
