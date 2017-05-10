@@ -3,7 +3,7 @@ version: '2'
 services:
   simple-tex-service:
     image: ${image}
-    build: .
+    # build: .
     ports:
     - 3003
     environment:

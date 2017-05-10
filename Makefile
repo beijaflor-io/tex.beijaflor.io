@@ -6,7 +6,10 @@ deploy: FORCE
 	make build-deb
 	make build-image
 	make push-image
-	image=$(image) ecs-cli compose service up
+	make rancher-up
+
+rancher-up: FORCE
+	image=$(image) rancher up
 
 up:
 	image=$(image) docker-compose up

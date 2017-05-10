@@ -138,7 +138,7 @@ main = do
     port <- read . fromMaybe "3003" <$> lookupEnv "PORT"
     spockCfg <- defaultSpockCfg () PCNoDatabase ()
     runSpock port $ spock spockCfg $ do
-        get "/" (getHome "localhost:3003")
+        get "/" (getHome "https://tex.beijaflor.io")
         post "/" $ do
             fs <- files
             let Just targetFile = uf_tempLocation <$> (HashMap.lookup "file" fs)
