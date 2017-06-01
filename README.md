@@ -1,5 +1,5 @@
 # tex.beijaflor.io
-TeX PDF generation as a service.
+TeX PDF generation web service.
 
 ## Problem
 A TeX installation is very large and it's nice to separate the role of running
