@@ -17,6 +17,8 @@ docker run -it \
   -e AWS_DEFAULT_REGION=... \
   # The name of the bucket to use to serve and cache PDF and output files
   -e STS_BUCKET_NAME=... \
+  # The public URL for the service
+  -e STS_HOST=... \
   beijaflorio/tex.beijaflor.io
 ```
 
