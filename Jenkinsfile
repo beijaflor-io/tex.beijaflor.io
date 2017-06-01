@@ -5,7 +5,7 @@ pipeline {
     stage('Build') {
       steps {
         echo 'Building..'
-        sh('stack build --setup-ghc')
+        sh 'which docker'
       }
     }
 
