@@ -1,8 +1,9 @@
 name: simple-tex-service
 version: '0.1.0.0'
-author: yamadapc
-maintainer: tacla.yamada@gmail.com
+author: Pedro Tacla Yamada
+maintainer: yamada@beijaflor.io
 license: AllRightsReserved
+synopsis: A small service to run tex PDF generation tasks
 
 dependencies:
 - Spock
