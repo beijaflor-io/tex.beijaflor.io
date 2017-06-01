@@ -1,6 +1,5 @@
 FROM ubuntu:xenial
 MAINTAINER Pedro Tacla Yamada <tacla.yamada@gmail.com>
-
 RUN apt-get update && apt-get install -y \
     texlive-full \
     latex-beamer \
@@ -12,7 +11,7 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /data
 VOLUME ["/data"]
 
-ADD ./dist/simple-tex-service_0.1.0.0_amd64.deb /app/
-RUN apt-get update && apt-get install -y /app/simple-tex-service_0.1.0.0_amd64.deb
+ADD ./.stack-fpm/linux/usr/local/bin/simple-tex-service /usr/local/bin/simple-tex-service
+RUN apt-get update && apt-get install -y libgmp-dev texlive-full latex-beamer context make
 
 CMD ["simple-tex-service"]

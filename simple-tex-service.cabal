@@ -32,6 +32,10 @@ executable simple-tex-service
     , unordered-containers
     , uuid
     , exceptions
+  other-modules:
+      SimpleTexService.Run
+      SimpleTexService.Types
+      SimpleTexService.View
   hs-source-dirs:
       src
   ghc-options: -threaded -rtsopts -O2 -with-rtsopts=-N -with-rtsopts=-A128m -with-rtsopts=-qi

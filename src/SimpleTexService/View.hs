@@ -7,7 +7,6 @@ module SimpleTexService.View where
 import           Control.Monad.IO.Class
 import qualified Data.HashMap.Lazy             as HashMap
 import           Data.Monoid
-import           Data.Monoid
 import           Data.String
 import           Data.Text                     (Text)
 import qualified Data.Text                     as Text
