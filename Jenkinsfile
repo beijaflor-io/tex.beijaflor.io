@@ -5,6 +5,9 @@ pipeline {
     stage('Build') {
       steps {
         echo 'Building..'
+        withDockerContainer 'fpco/stack-build' {
+          shell 'stack build'
+        }
       }
     }
 
