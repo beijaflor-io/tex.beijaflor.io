@@ -3,9 +3,10 @@
 -- see: https://github.com/sol/hpack
 
 name:                simple-tex-service
-version:             0.1.0.0
-author:              yamadapc
-maintainer:          tacla.yamada@gmail.com
+version:             0.2.0.0
+synopsis:            A small service to run tex PDF generation tasks
+author:              Pedro Tacla Yamada
+maintainer:          yamada@beijaflor.io
 license:             AllRightsReserved
 license-file:        LICENSE
 build-type:          Simple
