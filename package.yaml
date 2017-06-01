@@ -2,7 +2,7 @@ name: simple-tex-service
 version: '0.1.0.0'
 author: yamadapc
 maintainer: tacla.yamada@gmail.com
-license: UnspecifiedLicense
+license: AllRightsReserved
 
 dependencies:
 - Spock

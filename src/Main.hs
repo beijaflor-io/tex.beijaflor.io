@@ -92,7 +92,7 @@ runTex target = do
            , logPath
            )
 
-run targetFile = do
+run bucketName targetFile = do
     lgr <- AWS.newLogger AWS.Debug stdout
     env <- AWS.newEnv AWS.Discover
     uuid <- UUID.toString <$> randomIO
@@ -106,7 +106,7 @@ run targetFile = do
         texS3Key = f ++ ".tex"
 
     exists <- AWS.runResourceT $ AWS.runAWS (env & AWS.envLogger .~ lgr) $ (do
-        res <- AWS.send (AWS.headObject "simple-tex-service" (fromString pdfS3Key))
+        res <- AWS.send (AWS.headObject bucketName (fromString pdfS3Key))
         return (res ^. AWS.horsResponseStatus == 200)
       ) `catch` (\(AWS.ServiceError _) -> return False)
 
@@ -129,28 +129,30 @@ run targetFile = do
         AWS.runResourceT $ AWS.runAWS (env & AWS.envLogger .~ lgr) $
             forM_ pairs $ \(k, b, ct) -> uploadToS3 k b ct
     uploadToS3 key file contentType = do
-        let req = AWS.putObject "simple-tex-service" (fromString key) (AWS.toBody file)
+        let req = AWS.putObject bucketName (fromString key) (AWS.toBody file)
             req' = req & AWS.poContentType .~ (Just contentType)
         AWS.send req'
 
 main :: IO ()
 main = do
+    host <- getEnv "STS_HOST"
+    bucketName <- getEnv "STS_BUCKET_NAME"
     port <- read . fromMaybe "3003" <$> lookupEnv "PORT"
     spockCfg <- defaultSpockCfg () PCNoDatabase ()
     runSpock port $ spock spockCfg $ do
-        get "/" (getHome "https://tex.beijaflor.io")
+        get "/" (getHome host)
         post "/" $ do
             fs <- files
             let Just targetFile = uf_tempLocation <$> (HashMap.lookup "file" fs)
             liftIO $ print targetFile
-            (pdfS3Key, logS3Key, texS3Key) <- liftIO $ run targetFile
+            (pdfS3Key, logS3Key, texS3Key) <- liftIO $ run bucketName targetFile
             let setHeader' h = setHeader h . fromString
-            setHeader' "x-simple-tex-service-pdf" (s3Url pdfS3Key)
-            setHeader' "x-simple-tex-service-log" (s3Url logS3Key)
-            setHeader' "x-simple-tex-service-tex" (s3Url texS3Key)
+            setHeader' "x-sts-pdf" (s3Url bucketName pdfS3Key)
+            setHeader' "x-sts-log" (s3Url bucketName logS3Key)
+            setHeader' "x-sts-tex" (s3Url bucketName texS3Key)
             redirect $ fromString (s3Url pdfS3Key)
   where
-    s3Url u = "https://simple-tex-service.s3.amazonaws.com/" <> u
+    s3Url bucketName u = "https://" <> bucketName <> ".s3.amazonaws.com/" <> u
 
 {-
 (Nothing, Just inp, Just err, ph) <- createProcess (tex ["./examples/test.tex"])

@@ -10,3 +10,5 @@ services:
     - AWS_ACCESS_KEY_ID
     - AWS_SECRET_ACCESS_KEY
     - AWS_DEFAULT_REGION
+    - STS_BUCKET_NAME="simple-tex-service"
+    - STS_HOST="https://tex.beijaflor.io"
