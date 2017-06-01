@@ -5,8 +5,8 @@ pipeline {
     stage('Build') {
       steps {
         echo 'Building..'
-        withDockerContainer 'fpco/stack-build' {
-          shell 'stack build'
+        withDockerContainer('fpco/stack-build') {
+          sh('stack build --setup-ghc')
         }
       }
     }
