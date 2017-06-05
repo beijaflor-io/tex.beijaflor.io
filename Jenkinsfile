@@ -5,8 +5,8 @@ pipeline {
     stage('Build') {
       steps {
         echo 'Building..'
-        sh 'docker info'
-        sh 'docker build .'
+        sh 'sudo docker info'
+        sh 'sudo docker build .'
       }
     }
 
