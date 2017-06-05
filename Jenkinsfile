@@ -5,7 +5,7 @@ pipeline {
     stage('Build') {
       steps {
         echo 'Building..'
-        sh 'which docker'
+        sh 'docker build .'
       }
     }
 
