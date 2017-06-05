@@ -1,6 +1,5 @@
 FROM beijaflorio/stack-fpm
 ADD ./stack-fpm /stack-fpm
-VOLUME /var/run/docker.sock:/var/run/docker.sock
 ADD . /app
 WORKDIR /app
 RUN /stack-fpm
