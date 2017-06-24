@@ -27,7 +27,7 @@ executable simple-tex-service
     , pureMD5
     , random
     , shakespeare
-    , temporary
+    , temporary >= 1.2.1
     , text
     , unordered-containers
     , uuid

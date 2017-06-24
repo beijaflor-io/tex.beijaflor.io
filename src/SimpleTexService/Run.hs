@@ -8,6 +8,7 @@ import           Control.Monad
 import           Control.Monad.Catch
 import qualified Data.ByteString.Lazy as ByteStringL
 import qualified Data.Digest.Pure.MD5 as MD5
+import           Data.Monoid
 import           Data.String
 import qualified Data.UUID            as UUID
 import qualified Network.AWS          as AWS
@@ -20,14 +21,18 @@ import           System.Process       (CreateProcess (..), StdStream (..),
                                        createProcess, proc, waitForProcess)
 import           System.Random        (randomIO)
 
-tex :: [String] -> CreateProcess
-tex args = (proc "context" args) { std_out = NoStream
-                                 , std_err = NoStream
-                                 , std_in = NoStream
-                                 }
+tex :: String -> [String] -> CreateProcess
+tex "latex" args =
+  (proc "latex" (["--output-format=pdf"] <> args))
+  {std_out = NoStream, std_err = NoStream, std_in = NoStream}
+tex "context" args = (proc "context" args) { std_out = NoStream
+                                           , std_err = NoStream
+                                           , std_in = NoStream
+                                           }
+tex t args = error $ "Invalid textype " <> show t
 
-runTex :: FilePath -> IO (FilePath, FilePath)
-runTex target = do
+runTex :: String -> FilePath -> IO (FilePath, FilePath)
+runTex textype target = do
   tmp <- getTemporaryDirectory
   dir <- createTempDirectory tmp "simple-tex-service"
   let tmpTarget = dir ++ "/target.tex"
@@ -35,15 +40,18 @@ runTex target = do
       pdfPath = dir ++ "/target.pdf"
   copyFileWithMetadata target tmpTarget
   (Nothing, Nothing, Nothing, ph) <-
-    createProcess ((tex ["--noconsole", tmpTarget]) {cwd = Just dir})
+    createProcess ((tex textype ["--noconsole", tmpTarget]) {cwd = Just dir})
   ec <- waitForProcess ph
   case ec of
     ExitSuccess   -> return ()
-    ExitFailure e -> error ("Context failed with: " ++ show e)
+    ExitFailure e -> do
+        logs <- readFile logPath
+        putStrLn logs
+        error ("TeX failed with: " ++ show e)
   return (pdfPath, logPath)
 
-run :: AWS.BucketName -> FilePath -> IO (String, String, String)
-run bucketName targetFile = do
+run :: String -> AWS.BucketName -> FilePath -> IO (String, String, String)
+run texType bucketName targetFile = do
   lgr <- AWS.newLogger AWS.Debug stdout
   awsEnv <- AWS.newEnv AWS.Discover
   uuid <- UUID.toString <$> randomIO
@@ -62,7 +70,7 @@ run bucketName targetFile = do
   if exists
     then return (pdfS3Key, logS3Key, texS3Key)
     else do
-      (pdfFile, logFile) <- runTex targetFile
+      (pdfFile, logFile) <- runTex texType targetFile
       putStrLn $ "Generated files for " ++ uuid
       putStrLn $ "Terminating response for " ++ uuid
       pdfBody <- ByteStringL.readFile pdfFile
