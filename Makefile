@@ -9,17 +9,18 @@ deploy: FORCE
 	make rancher-up
 
 rancher-up: FORCE
-	image=$(image) rancher up
+	image=$(image) rancher up --force-upgrade
 
 up:
 	image=$(image) docker-compose up
 
 build-deb:
+	rm -rf ./dist/*
 	./stack-fpm
 
 build-image: FORCE
-	docker build -t $(image) .
-	docker build -t $(repository):latest .
+	docker build --build-arg package=./dist/$(shell ls ./dist | grep deb) -t $(image) .
+	docker tag $(image) $(repository):latest
 
 push-image: FORCE
 	docker push $(image)

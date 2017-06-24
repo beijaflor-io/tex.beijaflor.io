@@ -18,7 +18,8 @@ WORKDIR /data
 VOLUME ["/data"]
 
 # COPY --from 0 /app/.stack-fpm/linux/usr/local/bin/simple-tex-service /usr/local/bin/simple-tex-service
-COPY ./dist/tex.beijaflor.io_0.3.0.0_amd64.deb /src/
+ARG package
+COPY $package /src/
 RUN apt-get update && apt-get install -y /src/*.deb
 RUN apt-get update && apt-get install -y libgmp-dev texlive-full latex-beamer context make
 
