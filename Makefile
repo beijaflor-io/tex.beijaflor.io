@@ -24,5 +24,9 @@ build-image: FORCE
 push-image: FORCE
 	docker push $(image)
 	docker push $(repository):latest
+	docker tag $(image) beijaflorio/tex.beijaflor.io:$(tag)
+	docker tag $(image) beijaflorio/tex.beijaflor.io:latest
+	docker push beijaflorio/tex.beijaflor.io:$(tag)
+	docker push beijaflorio/tex.beijaflor.io:latest
 
 FORCE:

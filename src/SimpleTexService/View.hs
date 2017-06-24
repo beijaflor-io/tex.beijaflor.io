@@ -102,6 +102,8 @@ postHome = do
   texType <- fromMaybe "latex" <$> param "textype" :: Action String
   (pdfS3Key, logS3Key, texS3Key) <- liftIO $ run texType bucketName targetFile
   let setHeader' h = setHeader h . fromString
+  setHeader' "access-control-allow-origin" "*"
+  setHeader' "access-control-allow-headers" "*"
   setHeader' "x-sts-pdf" (s3Url bucketName pdfS3Key)
   setHeader' "x-sts-log" (s3Url bucketName logS3Key)
   setHeader' "x-sts-tex" (s3Url bucketName texS3Key)
