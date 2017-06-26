@@ -15,6 +15,7 @@ up:
 	image=$(image) docker-compose up
 
 build-deb:
+	rm -rf ./.stack-fpm/linux
 	rm -rf ./dist/*
 	./stack-fpm
 
