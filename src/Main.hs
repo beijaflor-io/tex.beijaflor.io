@@ -17,3 +17,4 @@ main = do
     spock spockCfg $ do
       get "/" getHome
       post "/" postHome
+      hookRoute OPTIONS "/" optionsHome

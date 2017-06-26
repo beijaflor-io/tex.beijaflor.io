@@ -5,12 +5,14 @@
 module SimpleTexService.View where
 
 import           Control.Monad.IO.Class
+import           Data.Aeson
 import qualified Data.HashMap.Lazy             as HashMap
 import           Data.Maybe
 import           Data.Monoid
 import           Data.String
 import           Data.Text                     (Text)
 import qualified Data.Text                     as Text
+import qualified Data.Text.IO                  as Text
 import qualified Network.AWS.S3                as AWS
 import           System.IO.Temp
 import           Text.Blaze.Html.Renderer.Utf8
@@ -86,20 +88,19 @@ getHome = do
                              , "  " <> curlExample host
                              ]
 
+optionsHome :: Action ()
+optionsHome = do
+  setHeader "access-control-allow-origin" "*"
+  setHeader "access-control-allow-headers" "*"
+  return ()
+
 postHome :: Action ()
 postHome = do
   appState <- getState
   let bucketName = _optionsBucketName . _appStateOptions $ appState
-  targetFile <-
-    do fs <- files
-       let mFileUpload = HashMap.lookup "file" fs
-       case uf_tempLocation <$> mFileUpload of
-         Just f
-           | (uf_name <$> mFileUpload) /= Just "" -> return f
-         _ -> do
-           t <- fromMaybe "" <$> param "text"
-           liftIO $ writeSystemTempFile "input" t
-  texType <- fromMaybe "latex" <$> param "textype" :: Action String
+  (targetFile, texType) <- header "content-type" >>= \case
+      Just "application/json" -> parseJson
+      _ -> parseForm
   (pdfS3Key, logS3Key, texS3Key) <- liftIO $ run texType bucketName targetFile
   let setHeader' h = setHeader h . fromString
   setHeader' "access-control-allow-origin" "*"
@@ -109,5 +110,29 @@ postHome = do
   setHeader' "x-sts-tex" (s3Url bucketName texS3Key)
   redirect $ fromString (s3Url bucketName pdfS3Key)
   where
+    parseJson = do
+      Object o <- jsonBody' :: Action Value
+      let Just (String t) = HashMap.lookup "text" o
+          (String texType) = fromMaybe "latex" $ HashMap.lookup "textype" o
+      fp <- liftIO $ do
+          fp <- emptySystemTempFile "input"
+          Text.writeFile fp t
+          return fp
+      return (fp, Text.unpack texType)
+    parseForm = do
+      fs <- files
+      let mFileUpload = HashMap.lookup "file" fs
+      fp <- case uf_tempLocation <$> mFileUpload of
+        Just f
+          | (uf_name <$> mFileUpload) /= Just "" -> return f
+        _ -> do
+          t <- fromMaybe "" <$> param "text" :: Action Text
+          liftIO $ do
+            print ("Flushing input", t)
+            fp <- emptySystemTempFile "input"
+            Text.writeFile fp t
+            return fp
+      texType <- fromMaybe "latex" <$> param "textype" :: Action String
+      return (fp, texType)
     s3Url (AWS.BucketName bucketName) u =
       "https://" <> Text.unpack bucketName <> ".s3.amazonaws.com/" <> u

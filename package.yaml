@@ -23,6 +23,7 @@ dependencies:
 - unordered-containers
 - uuid
 - exceptions
+- aeson
 
 executables:
   simple-tex-service:

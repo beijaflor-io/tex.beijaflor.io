@@ -32,6 +32,7 @@ executable simple-tex-service
     , unordered-containers
     , uuid
     , exceptions
+    , aeson
   other-modules:
       SimpleTexService.Run
       SimpleTexService.Types
