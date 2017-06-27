@@ -91,7 +91,7 @@ getHome = do
 optionsHome :: Action ()
 optionsHome = do
   setHeader "access-control-allow-origin" "*"
-  setHeader "access-control-allow-headers" "*"
+  setHeader "access-control-allow-headers" "content-type"
   return ()
 
 postHome :: Action ()
@@ -104,7 +104,7 @@ postHome = do
   (pdfS3Key, logS3Key, texS3Key) <- liftIO $ run texType bucketName targetFile
   let setHeader' h = setHeader h . fromString
   setHeader' "access-control-allow-origin" "*"
-  setHeader' "access-control-allow-headers" "*"
+  setHeader' "access-control-allow-headers" "content-type"
   setHeader' "x-sts-pdf" (s3Url bucketName pdfS3Key)
   setHeader' "x-sts-log" (s3Url bucketName logS3Key)
   setHeader' "x-sts-tex" (s3Url bucketName texS3Key)
@@ -115,6 +115,7 @@ postHome = do
       let Just (String t) = HashMap.lookup "text" o
           (String texType) = fromMaybe "latex" $ HashMap.lookup "textype" o
       fp <- liftIO $ do
+          print ("Flushing input", t)
           fp <- emptySystemTempFile "input"
           Text.writeFile fp t
           return fp
@@ -135,4 +136,4 @@ postHome = do
       texType <- fromMaybe "latex" <$> param "textype" :: Action String
       return (fp, texType)
     s3Url (AWS.BucketName bucketName) u =
-      "https://" <> Text.unpack bucketName <> ".s3.amazonaws.com/" <> u
+      "http://" <> Text.unpack bucketName <> ".s3-website-us-east-1.amazonaws.com/" <> u
