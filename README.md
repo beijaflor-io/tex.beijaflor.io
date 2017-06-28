@@ -59,6 +59,8 @@ docker run -it \
   -e STS_BUCKET_NAME=... \
   # The public URL for the service
   -e STS_HOST=... \
+  # The public URL for the S3 bucket (say you want to support https & CORS)
+  -e STS_S3_PUBLIC_URL=... \
   beijaflorio/tex.beijaflor.io
 ```
 
