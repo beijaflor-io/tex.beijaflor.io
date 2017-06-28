@@ -98,6 +98,7 @@ postHome :: Action ()
 postHome = do
   appState <- getState
   let bucketName = _optionsBucketName . _appStateOptions $ appState
+      s3PublicUrl = _optionsS3PublicUrl . _appStateOptions $ appState
   (targetFile, texType) <- header "content-type" >>= \case
       Just "application/json" -> parseJson
       _ -> parseForm
@@ -105,10 +106,10 @@ postHome = do
   let setHeader' h = setHeader h . fromString
   setHeader' "access-control-allow-origin" "*"
   setHeader' "access-control-allow-headers" "content-type"
-  setHeader' "x-sts-pdf" (s3Url bucketName pdfS3Key)
-  setHeader' "x-sts-log" (s3Url bucketName logS3Key)
-  setHeader' "x-sts-tex" (s3Url bucketName texS3Key)
-  redirect $ fromString (s3Url bucketName pdfS3Key)
+  setHeader' "x-sts-pdf" (s3PublicUrl <> pdfS3Key)
+  setHeader' "x-sts-log" (s3PublicUrl <> logS3Key)
+  setHeader' "x-sts-tex" (s3PublicUrl <> texS3Key)
+  redirect $ fromString (s3PublicUrl <> pdfS3Key)
   where
     parseJson = do
       Object o <- jsonBody' :: Action Value
@@ -135,5 +136,3 @@ postHome = do
             return fp
       texType <- fromMaybe "latex" <$> param "textype" :: Action String
       return (fp, texType)
-    s3Url (AWS.BucketName bucketName) u =
-      "http://" <> Text.unpack bucketName <> ".s3-website-us-east-1.amazonaws.com/" <> u
