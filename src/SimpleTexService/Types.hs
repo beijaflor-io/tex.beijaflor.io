@@ -55,7 +55,7 @@ parseOptions = do
     }
   where
     defaultS3PublicUrl (BucketName n) =
-      "http://" <> n <> ".s3-website-us-east-1.amazonaws.com"
+      "http://" <> n <> ".s3-website-us-east-1.amazonaws.com/"
 
 spockConfiguration :: st -> IO (SpockCfg () () st)
 spockConfiguration = defaultSpockCfg () PCNoDatabase
