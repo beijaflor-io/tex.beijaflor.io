@@ -114,7 +114,7 @@ postHome = do
     parseJson = do
       Object o <- jsonBody' :: Action Value
       let Just (String t) = HashMap.lookup "text" o
-          (String texType) = fromMaybe "latex" $ HashMap.lookup "textype" o
+          (String texType) = fromMaybe "lualatex" $ HashMap.lookup "textype" o
       fp <- liftIO $ do
           print ("Flushing input", t)
           fp <- emptySystemTempFile "input"

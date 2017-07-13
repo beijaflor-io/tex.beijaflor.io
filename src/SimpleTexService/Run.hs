@@ -22,6 +22,9 @@ import           System.Process       (CreateProcess (..), StdStream (..),
 import           System.Random        (randomIO)
 
 tex :: String -> [String] -> CreateProcess
+tex "lualatex" args =
+  (proc "lualatex" (["--output-format=pdf"] <> args))
+  {std_out = NoStream, std_err = NoStream, std_in = NoStream}
 tex "latex" args =
   (proc "latex" (["--output-format=pdf"] <> args))
   {std_out = NoStream, std_err = NoStream, std_in = NoStream}
