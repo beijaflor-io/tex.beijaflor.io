@@ -45,7 +45,9 @@ getHome = do
             <.form-group>
               <label for="textype">
                 TeX Family
-              <select value="latex" .form-control name="textype">
+              <select value="lualatex" .form-control name="textype">
+                <option value="lualatex">
+                  LuaLaTeX
                 <option value="latex">
                   LaTeX
                 <option value="context">
@@ -62,7 +64,9 @@ getHome = do
             <.form-group>
               <label for="textype">
                 TeX Family
-              <select value="latex" .form-control name="textype">
+              <select value="lualatex" .form-control name="textype">
+                <option value="lualatex">
+                  LuaLaTeX
                 <option value="latex">
                   LaTeX
                 <option value="context">
